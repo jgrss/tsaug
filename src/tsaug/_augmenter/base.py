@@ -13,10 +13,12 @@ class _Augmenter(ABC):
         repeats: int = 1,
         prob: float = 1.0,
         seed: Optional[int] = _default_seed,
+        static_rand: Optional[bool] = False
     ) -> None:
         self.repeats = repeats
         self.prob = prob
         self.seed = seed
+        self.static_rand = static_rand
 
     @classmethod
     @abstractmethod

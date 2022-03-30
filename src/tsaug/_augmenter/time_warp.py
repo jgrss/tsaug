@@ -53,10 +53,11 @@ class TimeWarp(_Augmenter):
         repeats: int = 1,
         prob: float = 1.0,
         seed: Optional[int] = _default_seed,
+        static_rand: Optional[bool] = False
     ):
         self.n_speed_change = n_speed_change
         self.max_speed_ratio = max_speed_ratio
-        super().__init__(repeats=repeats, prob=prob, seed=seed)
+        super().__init__(repeats=repeats, prob=prob, seed=seed, static_rand=static_rand)
 
     @classmethod
     def _get_param_name(cls) -> Tuple[str, ...]:
@@ -142,9 +143,13 @@ class TimeWarp(_Augmenter):
             )
         else:
             max_speed_ratio = rand.choice(self.max_speed_ratio, size=N)
-        anchor_values = rand.uniform(
-            low=0.0, high=1.0, size=(N, self.n_speed_change + 1)
-        )
+        if self.static_rand:
+            anchor_values = rand.uniform(low=0.0, high=1.0, size=self.n_speed_change + 1)
+            anchor_values = np.tile(anchor_values, (N, 1))
+        else:
+            anchor_values = rand.uniform(
+                low=0.0, high=1.0, size=(N, self.n_speed_change + 1)
+            )
         anchor_values = anchor_values - (
             anchor_values.max(axis=1, keepdims=True)
             - max_speed_ratio.reshape(N, 1)

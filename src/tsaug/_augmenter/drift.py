@@ -72,13 +72,14 @@ class Drift(_Augmenter):
         repeats: int = 1,
         prob: float = 1.0,
         seed: Optional[int] = _default_seed,
+        static_rand: Optional[bool] = False
     ):
         self.max_drift = max_drift
         self.n_drift_points = n_drift_points
         self.kind = kind
         self.per_channel = per_channel
         self.normalize = normalize
-        super().__init__(repeats=repeats, prob=prob, seed=seed)
+        super().__init__(repeats=repeats, prob=prob, seed=seed, static_rand=static_rand)
 
     @classmethod
     def _get_param_name(cls) -> Tuple[str, ...]:
@@ -197,9 +198,13 @@ class Drift(_Augmenter):
         for i, n in enumerate(n_drift_points):
             if not (ind == i).any():
                 continue
-            anchors = np.cumsum(
-                rand.normal(size=((ind == i).sum(), n + 2)), axis=1
-            )  # type: np.ndarray
+            if self.static_rand:
+                anchors = np.cumsum(rand.normal(size=n + 2), axis=0)
+                anchors = np.tile(anchors, ((ind == i).sum(), 1))
+            else:
+                anchors = np.cumsum(
+                    rand.normal(size=((ind == i).sum(), n + 2)), axis=1
+                )  # type: np.ndarray
             interpFuncs = CubicSpline(
                 np.linspace(0, T, n + 2), anchors, axis=1
             )  # type: Callable
